@@ -1,0 +1,62 @@
+import mongoose from "mongoose";
+import { randomUUID } from "crypto";
+import { Workspace } from "./workspace.model.js";
+import { WorkspaceMember } from "./workspace-member.model.js";
+
+interface CreateWorkspaceInput {
+  name: string;
+  userId: string;
+}
+
+const generateSlug = (name: string): string => {
+  const baseSlug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return `${baseSlug}-${randomUUID().slice(0, 8)}`;
+};
+
+export const createWorkspace = async ({
+  name,
+  userId,
+}: CreateWorkspaceInput) => {
+  const session = await mongoose.startSession();
+
+  try {
+    let createdWorkspace;
+
+    await session.withTransaction(async () => {
+      const [workspace] = await Workspace.create(
+        [
+          {
+            name,
+            slug: generateSlug(name),
+            createdBy: userId,
+          },
+        ],
+        { session },
+      );
+
+      if (workspace) {
+        await WorkspaceMember.create(
+          [
+            {
+              workspaceId: workspace._id,
+              userId,
+              role: "OWNER",
+            },
+          ],
+          { session },
+        );
+
+        createdWorkspace = workspace;
+      }
+    });
+
+    return createdWorkspace;
+  } finally {
+    await session.endSession();
+  }
+};

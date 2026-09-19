@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { notFound } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import authRoutes from "./modules/auth/auth.routes.js";
+import workspaceRoutes from "./modules/workspaces/workspaces.routes.js";
 
 const app = express();
 app.use(cors());
@@ -23,7 +24,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-
+app.use("/api/workspaces", workspaceRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
