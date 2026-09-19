@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { notFound } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,8 @@ app.get("/api/health", (_req, res) => {
     message: "Nexus API is running",
   });
 });
+
+app.use("/api/auth", authRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
