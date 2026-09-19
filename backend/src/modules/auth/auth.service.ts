@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
 import { User } from "./auth.model.js";
 import { AppError } from "../../utils/app-error.js";
 import {
@@ -21,10 +20,9 @@ interface LoginInput {
   password: string;
 }
 
-const createTokens = (userId: string, role: string) => {
+const createTokens = (userId: string) => {
   const payload: TokenPayload = {
     userId,
-    role,
   };
 
   return {
@@ -55,9 +53,8 @@ export const register = async (input: RegisterInput) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
     },
-    ...createTokens(user.id, user.role),
+    ...createTokens(user.id),
   };
 };
 
@@ -81,13 +78,14 @@ export const login = async (input: LoginInput) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
     },
-    ...createTokens(user.id, user.role),
+    ...createTokens(user.id),
   };
 };
 
-export const refreshAccessToken = (refreshToken: string) => {
+export const refreshAccessToken = (
+  refreshToken: string,
+): { accessToken: string } => {
   try {
     const decoded = jwt.verify(
       refreshToken,
@@ -96,7 +94,6 @@ export const refreshAccessToken = (refreshToken: string) => {
 
     const accessToken = generateAccessToken({
       userId: decoded.userId,
-      role: decoded.role,
     });
 
     return { accessToken };

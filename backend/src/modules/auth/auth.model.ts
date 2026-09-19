@@ -26,11 +26,6 @@ const userSchema = new Schema<IUser>(
       required: true,
       select: false,
     },
-    role: {
-      type: String,
-      enum: ["OWNER", "ADMIN", "MEMBER", "VIEWER"],
-      default: "MEMBER",
-    },
   },
   {
     timestamps: true,

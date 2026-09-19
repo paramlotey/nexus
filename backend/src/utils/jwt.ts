@@ -2,7 +2,6 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 
 export interface TokenPayload {
   userId: string;
-  role: string;
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
