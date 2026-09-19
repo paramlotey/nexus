@@ -60,3 +60,17 @@ export const createWorkspace = async ({
     await session.endSession();
   }
 };
+
+export const getUserWorkspaces = async (userId: string) => {
+  const memberships = await WorkspaceMember.find({ userId })
+    .populate({
+      path: "workspaceId",
+      model: Workspace,
+      select: "name slug createdBy createdAt updatedAt",
+    })
+    .sort({ createdAt: -1 });
+  return memberships.map((membership) => ({
+    workspace: membership.workspaceId,
+    role: membership.role,
+  }));
+};
