@@ -49,3 +49,33 @@ export const getMyWorkspaces = async (
     next(error);
   }
 };
+
+export const getWorkspaceById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const workspaceId = req.params.workspaceId;
+
+    if (typeof workspaceId !== "string" || workspaceId.trim() === "") {
+      res.status(400).json({
+        success: false,
+        message: "Invalid workspace id",
+      });
+      return;
+    }
+
+    const workspace = await workspaceService.getWorkspaceById(workspaceId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        workspace,
+        role: req.workspaceMember?.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { randomUUID } from "crypto";
 import { Workspace } from "./workspace.model.js";
 import { WorkspaceMember } from "./workspace-member.model.js";
+import { AppError } from "../../utils/app-error.js";
 
 interface CreateWorkspaceInput {
   name: string;
@@ -73,4 +74,14 @@ export const getUserWorkspaces = async (userId: string) => {
     workspace: membership.workspaceId,
     role: membership.role,
   }));
+};
+
+export const getWorkspaceById = async (workspaceId: string) => {
+  const workspace = await Workspace.findById(workspaceId);
+
+  if (!workspace) {
+    throw new AppError(404, "Workspace not found");
+  }
+
+  return workspace;
 };
