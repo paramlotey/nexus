@@ -1,14 +1,30 @@
 import mongoose from "mongoose";
 import { randomUUID } from "crypto";
 import { Workspace } from "./workspace.model.js";
-import { WorkspaceMember } from "./workspace-member.model.js";
+import { WorkspaceMember, WorkspaceRole } from "./workspace-member.model.js";
 import { AppError } from "../../utils/app-error.js";
+import { User } from "../auth/auth.model.js";
 
 interface CreateWorkspaceInput {
   name: string;
   userId: string;
 }
 
+type ManageableRole = Exclude<WorkspaceRole, "OWNER">;
+
+interface AddMemberInput {
+  workspaceId: string;
+  email: string;
+  role: ManageableRole;
+  actingUser: WorkspaceRole;
+}
+
+interface UpdateMemberRoleInput {
+  workspaceId: string;
+  memberId: string;
+  role: ManageableRole;
+  actingUser: WorkspaceRole;
+}
 const generateSlug = (name: string): string => {
   const baseSlug = name
     .trim()
@@ -84,4 +100,98 @@ export const getWorkspaceById = async (workspaceId: string) => {
   }
 
   return workspace;
+};
+
+export const getWorkspaceMembers = async (workspaceId: string) => {
+  return WorkspaceMember.find({ workspaceId })
+    .populate("userId", "name email")
+    .sort({ createdAt: 1 });
+};
+
+export const addWorkspaceMember = async ({
+  workspaceId,
+  email,
+  role,
+  actingUser,
+}: AddMemberInput) => {
+  if (actingUser === "ADMIN" && role === "ADMIN") {
+    throw new AppError(403, "Admins cannot add other admins");
+  }
+
+  const user = await User.findOne({
+    email: email.toLowerCase(),
+  });
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  const existingMembership = await WorkspaceMember.findOne({
+    workspaceId,
+    userId: user._id,
+  });
+
+  if (existingMembership) {
+    throw new AppError(409, "User is already a workspace member");
+  }
+
+  return WorkspaceMember.create({
+    workspaceId,
+    userId: user._id,
+    role,
+  });
+};
+
+export const updateWorkspaceMemberRole = async ({
+  workspaceId,
+  memberId,
+  role,
+  actingUser,
+}: UpdateMemberRoleInput) => {
+  const member = await WorkspaceMember.findOne({
+    _id: memberId,
+    workspaceId,
+  });
+
+  if (!member) {
+    throw new AppError(404, "Workspace member not found");
+  }
+
+  if (member.role === "OWNER") {
+    throw new AppError(403, "Workspace owner role cannot be changed");
+  }
+
+  if (actingUser === "ADMIN" && (member.role === "ADMIN" || role === "ADMIN")) {
+    throw new AppError(403, "Admins cannot manage other admins");
+  }
+
+  member.role = role;
+
+  await member.save();
+  return member;
+};
+
+export const removeWorkspaceMember = async (
+  workspaceId: string,
+  memberId: string,
+  actingUser: WorkspaceRole,
+) => {
+  const member = await WorkspaceMember.findOne({
+    _id: memberId,
+    workspaceId,
+  });
+
+  if (!member) {
+    throw new AppError(404, "Workspace member not found");
+  }
+
+  if (member.role === "OWNER") {
+    throw new AppError(403, "Workspace owner cannot be removed");
+  }
+
+  if (actingUser === "ADMIN" && member.role === "ADMIN") {
+    throw new AppError(403, "Admins cannot remove other admins");
+  }
+
+  await member.deleteOne();
 };
