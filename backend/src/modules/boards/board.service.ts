@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { Board } from "./board.model.js";
 import { Project } from "../projects/project.model.js";
 import { AppError } from "../../utils/app-error.js";
+import { Column } from "../columns/column.model.js";
 
 interface CreateBoardInput {
   workspaceId: string;
@@ -144,13 +145,33 @@ export const deleteBoard = async (
 
   await ensureProjectBelongsToWorkspace(workspaceId, projectId);
 
-  const board = await Board.findOneAndDelete({
-    _id: boardId,
-    workspaceId,
-    projectId,
-  });
+  const session = await mongoose.startSession();
 
-  if (!board) {
-    throw new AppError(404, "Board not found");
+  try {
+    await session.withTransaction(async () => {
+      const board = await Board.findOne({
+        _id: boardId,
+        workspaceId,
+        projectId,
+      }).session(session);
+
+      if (!board) {
+        throw new AppError(404, "Board not found");
+      }
+
+      await Column.deleteMany({
+        workspaceId,
+        projectId,
+        boardId,
+      }).session(session);
+
+      await Board.deleteOne({
+        _id: boardId,
+        workspaceId,
+        projectId,
+      }).session(session);
+    });
+  } finally {
+    await session.endSession();
   }
 };
