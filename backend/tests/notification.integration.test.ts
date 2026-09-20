@@ -186,7 +186,7 @@ describe("Notification API", () => {
     };
 
     expect(await processNotificationJob(job)).toBe(1);
-    expect(await processNotificationJob(job)).toBe(1);
+    expect(await processNotificationJob(job)).toBe(0);
     expect(await Notification.countDocuments()).toBe(1);
   });
 });

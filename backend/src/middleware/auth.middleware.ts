@@ -1,8 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import { env } from "../config/env.js";
 import { AppError } from "../utils/app-error.js";
-import type { TokenPayload } from "../utils/jwt.js";
+import { verifyAccessToken } from "../utils/jwt.js";
 
 export const authenticate = (
   req: Request,
@@ -23,28 +21,11 @@ export const authenticate = (
     return;
   }
 
-  const jwtSecret = env.JWT_ACCESS_SECRET;
-
-  if (!jwtSecret) {
-    next(new AppError(500, "JWT secret not configured"));
-    return;
-  }
-
   try {
-    const decoded = jwt.verify(token, jwtSecret);
-
-    if (
-      typeof decoded !== "object" ||
-      decoded === null ||
-      !("userId" in decoded) ||
-      typeof decoded.userId !== "string"
-    ) {
-      next(new AppError(401, "Invalid or expired access token"));
-      return;
-    }
+    const decoded = verifyAccessToken(token);
 
     req.user = {
-      userId: decoded.userId as TokenPayload["userId"],
+      userId: decoded.userId,
     };
 
     next();

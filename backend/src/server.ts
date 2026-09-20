@@ -1,4 +1,5 @@
 import app from "./app.js";
+import { createServer } from "node:http";
 import mongoose from "mongoose";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
@@ -8,8 +9,12 @@ import {
   stopNotificationWorker,
 } from "./jobs/workers/notification.worker.js";
 import { closeNotificationQueue } from "./jobs/queues/notification.queue.js";
+import {
+  closeSocketServer,
+  initializeSocketServer,
+} from "./sockets/socket.server.js";
 
-let httpServer: ReturnType<typeof app.listen> | null = null;
+const httpServer = createServer(app);
 let shuttingDown = false;
 
 const startServer = async (): Promise<void> => {
@@ -17,8 +22,9 @@ const startServer = async (): Promise<void> => {
     await connectDatabase();
     await connectRedis();
     startNotificationWorker();
+    initializeSocketServer(httpServer);
 
-    httpServer = app.listen(env.PORT, () => {
+    httpServer.listen(env.PORT, () => {
       console.log(`WorkSpace API running on port ${env.PORT}`);
     });
   } catch (error) {
@@ -33,22 +39,22 @@ const shutdown = async (signal: string): Promise<void> => {
   console.log(`${signal} received. Shutting down gracefully.`);
 
   try {
-    if (httpServer) {
-      await new Promise<void>((resolve, reject) => {
-        httpServer?.close((error) => {
-          if (error) reject(error);
-          else resolve();
-        });
-      });
-      httpServer = null;
-    }
-
+    await closeSocketServer();
     await stopNotificationWorker();
     await closeNotificationQueue();
     await disconnectRedis();
 
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();
+    }
+
+    if (httpServer.listening) {
+      await new Promise<void>((resolve, reject) => {
+        httpServer.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
     }
   } catch (error) {
     console.error("Graceful shutdown failed:", error);
