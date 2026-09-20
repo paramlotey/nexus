@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import * as taskService from "./task.service.js";
 import { AppError } from "../../utils/app-error.js";
 import { recordAuditLog } from "../audit/audit.service.js";
+import { publishNotification } from "../../jobs/publishers/notification.publisher.js";
 
 const getRequiredParam = (req: Request, paramName: string): string => {
   const value = req.params[paramName];
@@ -60,6 +61,24 @@ export const createTask = async (
         title: task.title,
       },
     });
+
+    if (task.assigneeIds.length > 0) {
+      await publishNotification({
+        workspaceId: context.workspaceId,
+        recipientIds: task.assigneeIds.map((id) => id.toString()),
+        actorId: req.user.userId,
+        type: "TASK_ASSIGNED",
+        title: "New task assigned",
+        message: `You were assigned to "${task.title}"`,
+        entityType: "TASK",
+        entityId: task._id.toString(),
+        metadata: {
+          projectId: context.projectId,
+          boardId: context.boardId,
+          columnId: task.columnId.toString(),
+        },
+      });
+    }
 
     res.status(201).json({
       success: true,

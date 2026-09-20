@@ -5,6 +5,7 @@ export const SEARCH_ENTITY_TYPES = [
   "BOARD",
   "TASK",
   "COMMENT",
+  "DOCUMENT",
 ] as const;
 
 export type SearchEntityType = (typeof SEARCH_ENTITY_TYPES)[number];

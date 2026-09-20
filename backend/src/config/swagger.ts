@@ -29,6 +29,8 @@ export const swaggerSpec = swaggerJsdoc({
       { name: "Attachments" },
       { name: "Audit Logs" },
       { name: "Search" },
+      { name: "Notifications" },
+      { name: "Documents" },
     ],
 
     components: {
@@ -312,6 +314,43 @@ export const swaggerSpec = swaggerJsdoc({
             position: {
               type: "integer",
               minimum: 0,
+            },
+          },
+        },
+
+        CreateDocumentRequest: {
+          type: "object",
+          required: ["title"],
+          properties: {
+            title: {
+              type: "string",
+              minLength: 1,
+              maxLength: 200,
+              example: "Architecture notes",
+            },
+            content: {
+              type: "string",
+              maxLength: 100000,
+            },
+            projectId: {
+              type: "string",
+              description: "Optional project within the workspace.",
+            },
+          },
+        },
+
+        UpdateDocumentRequest: {
+          type: "object",
+          minProperties: 1,
+          properties: {
+            title: {
+              type: "string",
+              minLength: 1,
+              maxLength: 200,
+            },
+            content: {
+              type: "string",
+              maxLength: 100000,
             },
           },
         },

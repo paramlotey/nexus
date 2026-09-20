@@ -16,15 +16,25 @@ import commentRoutes from "./modules/comments/comment.routes.js";
 import attachmentRoutes from "./modules/attachments/attachment.routes.js";
 import auditRoutes from "./modules/audit/audit.route.js";
 import searchRoutes from "./modules/search/search.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
+import documentRoutes from "./modules/documents/document.routes.js";
+import {
+  apiRateLimiter,
+  authRateLimiter,
+} from "./middleware/rate-limit.middleware.js";
 
 const app = express();
 app.use(cors());
 
 app.use(helmet());
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== "test") {
+  app.use(morgan("dev"));
+}
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", apiRateLimiter);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
@@ -33,7 +43,7 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRateLimiter, authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/workspaces/:workspaceId", projectRoutes);
 app.use("/api/workspaces/:workspaceId/projects/:projectId/boards", boardRoutes);
@@ -55,6 +65,11 @@ app.use(
 );
 app.use("/api/workspaces/:workspaceId/audit-logs", auditRoutes);
 app.use("/api/workspaces/:workspaceId/search", searchRoutes);
+app.use("/api/workspaces/:workspaceId/documents", documentRoutes);
+app.use(
+  "/api/workspaces/:workspaceId/notifications",
+  notificationRoutes,
+);
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
