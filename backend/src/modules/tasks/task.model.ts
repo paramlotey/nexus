@@ -115,4 +115,19 @@ taskSchema.index({
   assigneeIds: 1,
 });
 
+taskSchema.index(
+  {
+    workspaceId: 1,
+    title: "text",
+    description: "text",
+  },
+  {
+    name: "task_workspace_text_search",
+    weights: {
+      title: 5,
+      description: 1,
+    },
+  },
+);
+
 export const Task = model<ITask>("Task", taskSchema);

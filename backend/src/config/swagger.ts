@@ -27,6 +27,8 @@ export const swaggerSpec = swaggerJsdoc({
       { name: "Tasks" },
       { name: "Comments" },
       { name: "Attachments" },
+      { name: "Audit Logs" },
+      { name: "Search" },
     ],
 
     components: {
@@ -159,7 +161,7 @@ export const swaggerSpec = swaggerJsdoc({
             },
           },
         },
-        
+
         CreateBoardRequest: {
           type: "object",
           required: ["name"],
@@ -320,7 +322,9 @@ export const swaggerSpec = swaggerJsdoc({
   apis: [
     "./src/app.ts",
     "./src/modules/**/*.routes.ts",
+    "./src/modules/**/*.route.ts",
     "./dist/app.js",
     "./dist/modules/**/*.routes.js",
+    "./dist/modules/**/*.route.js",
   ],
 });

@@ -14,6 +14,8 @@ import columnRoutes from "./modules/columns/column.routes.js";
 import taskRoutes from "./modules/tasks/task.routes.js";
 import commentRoutes from "./modules/comments/comment.routes.js";
 import attachmentRoutes from "./modules/attachments/attachment.routes.js";
+import auditRoutes from "./modules/audit/audit.route.js";
+import searchRoutes from "./modules/search/search.routes.js";
 
 const app = express();
 app.use(cors());
@@ -51,6 +53,9 @@ app.use(
   "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/tasks/:taskId/attachments",
   attachmentRoutes,
 );
+app.use("/api/workspaces/:workspaceId/audit-logs", auditRoutes);
+app.use("/api/workspaces/:workspaceId/search", searchRoutes);
+
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/api/docs.json", (_req, res) => {

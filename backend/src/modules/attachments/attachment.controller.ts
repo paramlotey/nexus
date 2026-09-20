@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import * as attachmentService from "./attachment.service.js";
 import { resolveStoragePath } from "./attachment.storage.js";
 import { AppError } from "../../utils/app-error.js";
+import { recordAuditLog } from "../audit/audit.service.js";
 
 const getRequiredParam = (req: Request, paramName: string): string => {
   const value = req.params[paramName];
@@ -34,11 +35,29 @@ export const createAttachment = async (
       throw new AppError(400, "File is required");
     }
 
+    const context = getContext(req);
+
     const attachment = await attachmentService.createAttachment(
-      getContext(req),
+      context,
       req.user.userId,
       req.file,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "ATTACHMENT_UPLOADED",
+      entityType: "ATTACHMENT",
+      entityId: attachment._id.toString(),
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId: context.taskId,
+        originalName: attachment.originalName,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -102,15 +121,31 @@ export const deleteAttachment = async (
       throw new AppError(401, "Authentication required");
     }
 
-    await attachmentService.deleteAttachment(
-      getContext(req),
+    const context = getContext(req);
+    const attachmentId = getRequiredParam(req, "attachmentId");
 
-      getRequiredParam(req, "attachmentId"),
+    await attachmentService.deleteAttachment(
+      context,
+
+      attachmentId,
 
       req.user.userId,
 
       req.workspaceMember.role,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "ATTACHMENT_DELETED",
+      entityType: "ATTACHMENT",
+      entityId: attachmentId,
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId: context.taskId,
+      },
+    });
 
     res.status(204).send();
   } catch (error) {

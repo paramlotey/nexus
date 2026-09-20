@@ -45,4 +45,19 @@ projectSchema.index({
   createdAt: -1,
 });
 
+projectSchema.index(
+  {
+    workspaceId: 1,
+    name: "text",
+    description: "text",
+  },
+  {
+    name: "project_workspace_text_search",
+    weights: {
+      name: 5,
+      description: 1,
+    },
+  },
+);
+
 export const Project = model<IProject>("Project", projectSchema);

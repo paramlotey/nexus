@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { randomUUID } from "crypto";
-import { Workspace } from "./workspace.model.js";
+import { Workspace, type IWorkspace } from "./workspace.model.js";
 import { WorkspaceMember, WorkspaceRole } from "./workspace-member.model.js";
 import { AppError } from "../../utils/app-error.js";
 import { User } from "../auth/auth.model.js";
@@ -42,7 +42,7 @@ export const createWorkspace = async ({
   const session = await mongoose.startSession();
 
   try {
-    let createdWorkspace;
+    let createdWorkspace: IWorkspace | undefined;
 
     await session.withTransaction(async () => {
       const [workspace] = await Workspace.create(

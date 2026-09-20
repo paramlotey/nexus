@@ -54,4 +54,19 @@ boardSchema.index({
   createdAt: -1,
 });
 
+boardSchema.index(
+  {
+    workspaceId: 1,
+    name: "text",
+    description: "text",
+  },
+  {
+    name: "board_workspace_text_search",
+    weights: {
+      name: 5,
+      description: 1,
+    },
+  },
+);
+
 export const Board = model<IBoard>("Board", boardSchema);
