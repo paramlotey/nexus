@@ -10,6 +10,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import workspaceRoutes from "./modules/workspaces/workspaces.routes.js";
 import projectRoutes from "./modules/projects/project.routes.js";
 import boardRoutes from "./modules/boards/board.routes.js";
+import columnRoutes from "./modules/columns/column.routes.js";
 
 const app = express();
 app.use(cors());
@@ -31,6 +32,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/workspaces/:workspaceId", projectRoutes);
 app.use("/api/workspaces/:workspaceId/projects/:projectId/boards", boardRoutes);
+app.use(
+  "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns",
+  columnRoutes,
+);
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
