@@ -112,6 +112,115 @@ export const swaggerSpec = swaggerJsdoc({
             },
           },
         },
+
+        CreateProjectRequest: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 2,
+              maxLength: 100,
+              example: "Website Redesign",
+            },
+            description: {
+              type: "string",
+              maxLength: 1000,
+              example: "Redesign the marketing website",
+            },
+          },
+        },
+
+        UpdateProjectRequest: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              minLength: 2,
+              maxLength: 100,
+              example: "Website Redesign V2",
+            },
+            description: {
+              type: "string",
+              maxLength: 1000,
+              example: "Updated project scope",
+            },
+          },
+        },
+        CreateBoardRequest: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 2,
+              maxLength: 100,
+              example: "Development Board",
+            },
+            description: {
+              type: "string",
+              maxLength: 1000,
+              example: "Main development workflow",
+            },
+          },
+        },
+
+        UpdateBoardRequest: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              minLength: 2,
+              maxLength: 100,
+            },
+            description: {
+              type: "string",
+              maxLength: 1000,
+            },
+          },
+        },
+
+        CreateColumnRequest: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 80,
+              example: "TODO",
+            },
+          },
+        },
+
+        UpdateColumnRequest: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 80,
+              example: "BACKLOG",
+            },
+          },
+        },
+
+        ReorderColumnsRequest: {
+          type: "object",
+          required: ["columnIds"],
+          properties: {
+            columnIds: {
+              type: "array",
+              minItems: 1,
+              uniqueItems: true,
+              items: {
+                type: "string",
+              },
+              example: ["columnId3", "columnId1", "columnId2"],
+            },
+          },
+        },
       },
     },
   },
