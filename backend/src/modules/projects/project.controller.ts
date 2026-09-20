@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import * as projectService from "./project.service.js";
 import { AppError } from "../../utils/app-error.js";
+import { recordAuditLog } from "../audit/audit.service.js";
 
 const getRequiredParam = (req: Request, paramName: string): string => {
   const value = req.params[paramName];
@@ -30,6 +31,15 @@ export const createProject = async (
       name: req.body.name,
       description: req.body.description,
       userId: req.user.userId,
+    });
+
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.user.userId,
+      action: "PROJECT_CREATED",
+      entityType: "PROJECT",
+      entityId: project._id.toString(),
+      metadata: { name: project.name },
     });
 
     res.status(201).json({
@@ -87,6 +97,10 @@ export const updateProject = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      throw new AppError(401, "Authentication required");
+    }
+
     const workspaceId = getRequiredParam(req, "workspaceId");
 
     const projectId = getRequiredParam(req, "projectId");
@@ -96,6 +110,15 @@ export const updateProject = async (
       projectId,
       name: req.body.name,
       description: req.body.description,
+    });
+
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.user.userId,
+      action: "PROJECT_UPDATED",
+      entityType: "PROJECT",
+      entityId: project._id.toString(),
+      metadata: { changedFields: Object.keys(req.body) },
     });
 
     res.status(200).json({
@@ -113,11 +136,23 @@ export const deleteProject = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      throw new AppError(401, "Authentication required");
+    }
+
     const workspaceId = getRequiredParam(req, "workspaceId");
 
     const projectId = getRequiredParam(req, "projectId");
 
     await projectService.deleteProject(workspaceId, projectId);
+
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.user.userId,
+      action: "PROJECT_DELETED",
+      entityType: "PROJECT",
+      entityId: projectId,
+    });
 
     res.status(204).send();
   } catch (error) {

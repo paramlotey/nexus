@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import * as columnService from "./column.service.js";
 import { AppError } from "../../utils/app-error.js";
+import { recordAuditLog } from "../audit/audit.service.js";
 
 const getRequiredParam = (req: Request, paramName: string): string => {
   const value = req.params[paramName];
@@ -25,9 +26,28 @@ export const createColumn = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      throw new AppError(401, "Authentication required");
+    }
+
+    const context = getContext(req);
+
     const column = await columnService.createColumn({
-      ...getContext(req),
+      ...context,
       name: req.body.name,
+    });
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COLUMN_CREATED",
+      entityType: "COLUMN",
+      entityId: column._id.toString(),
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        name: column.name,
+      },
     });
 
     res.status(201).json({
@@ -62,10 +82,29 @@ export const updateColumn = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      throw new AppError(401, "Authentication required");
+    }
+
+    const context = getContext(req);
+
     const column = await columnService.updateColumn({
-      ...getContext(req),
+      ...context,
       columnId: getRequiredParam(req, "columnId"),
       name: req.body.name,
+    });
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COLUMN_UPDATED",
+      entityType: "COLUMN",
+      entityId: column._id.toString(),
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        changedFields: ["name"],
+      },
     });
 
     res.status(200).json({
@@ -83,10 +122,28 @@ export const reorderColumns = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      throw new AppError(401, "Authentication required");
+    }
+
+    const context = getContext(req);
+
     const columns = await columnService.reorderColumns(
-      getContext(req),
+      context,
       req.body.columnIds,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COLUMN_REORDERED",
+      entityType: "COLUMN",
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        columnIds: req.body.columnIds,
+      },
+    });
 
     res.status(200).json({
       success: true,
@@ -103,10 +160,29 @@ export const deleteColumn = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      throw new AppError(401, "Authentication required");
+    }
+
+    const context = getContext(req);
+    const columnId = getRequiredParam(req, "columnId");
+
     await columnService.deleteColumn(
-      getContext(req),
-      getRequiredParam(req, "columnId"),
+      context,
+      columnId,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COLUMN_DELETED",
+      entityType: "COLUMN",
+      entityId: columnId,
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+      },
+    });
 
     res.status(204).send();
   } catch (error) {

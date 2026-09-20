@@ -67,4 +67,14 @@ commentSchema.index({
   createdAt: 1,
 });
 
+commentSchema.index(
+  {
+    workspaceId: 1,
+    content: "text",
+  },
+  {
+    name: "comment_workspace_text_search",
+  },
+);
+
 export const Comment = model<IComment>("Comment", commentSchema);

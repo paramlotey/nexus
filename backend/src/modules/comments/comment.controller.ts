@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import * as commentService from "./comment.service.js";
 import { AppError } from "../../utils/app-error.js";
+import { recordAuditLog } from "../audit/audit.service.js";
 
 const getRequiredParam = (req: Request, paramName: string): string => {
   const value = req.params[paramName];
@@ -33,11 +34,26 @@ export const createComment = async (
       throw new AppError(401, "Authentication required");
     }
 
+    const context = getContext(req);
+
     const comment = await commentService.createComment(
-      getContext(req),
+      context,
       req.user.userId,
       req.body.content,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COMMENT_CREATED",
+      entityType: "COMMENT",
+      entityId: comment._id.toString(),
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId: context.taskId,
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -75,8 +91,10 @@ export const updateComment = async (
       throw new AppError(401, "Authentication required");
     }
 
+    const context = getContext(req);
+
     const comment = await commentService.updateComment(
-      getContext(req),
+      context,
 
       getRequiredParam(req, "commentId"),
 
@@ -84,6 +102,20 @@ export const updateComment = async (
 
       req.body.content,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COMMENT_UPDATED",
+      entityType: "COMMENT",
+      entityId: comment._id.toString(),
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId: context.taskId,
+        changedFields: ["content"],
+      },
+    });
 
     res.status(200).json({
       success: true,
@@ -104,15 +136,31 @@ export const deleteComment = async (
       throw new AppError(401, "Authentication required");
     }
 
-    await commentService.deleteComment(
-      getContext(req),
+    const context = getContext(req);
+    const commentId = getRequiredParam(req, "commentId");
 
-      getRequiredParam(req, "commentId"),
+    await commentService.deleteComment(
+      context,
+
+      commentId,
 
       req.user.userId,
 
       req.workspaceMember.role,
     );
+
+    await recordAuditLog({
+      workspaceId: context.workspaceId,
+      actorId: req.user.userId,
+      action: "COMMENT_DELETED",
+      entityType: "COMMENT",
+      entityId: commentId,
+      metadata: {
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId: context.taskId,
+      },
+    });
 
     res.status(204).send();
   } catch (error) {

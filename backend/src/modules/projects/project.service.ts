@@ -4,6 +4,16 @@ import { Project } from "./project.model.js";
 import { AppError } from "../../utils/app-error.js";
 import { deleteProjectTree } from "../../services/resource-cleanup.service.js";
 import { deleteStoredFiles } from "../attachments/attachment.storage.js";
+import { env } from "../../config/env.js";
+import {
+  deleteCacheKeys,
+  getCachedJson,
+  setCachedJson,
+} from "../../services/cache.service.js";
+import {
+  getProjectCacheKey,
+  getWorkspaceProjectsCacheKey,
+} from "./project.cache.js";
 
 interface CreateProjectInput {
   workspaceId: string;
@@ -33,18 +43,35 @@ export const createProject = async ({
 }: CreateProjectInput) => {
   validateObjectId(workspaceId, "workspaceId");
 
-  return Project.create({
+  const project = await Project.create({
     workspaceId,
     name,
     ...(description !== undefined && { description }),
     createdBy: userId,
   });
+
+  await deleteCacheKeys(getWorkspaceProjectsCacheKey(workspaceId));
+
+  return project;
 };
 
 export const getWorkspaceProjects = async (workspaceId: string) => {
   validateObjectId(workspaceId, "workspaceId");
 
-  return Project.find({ workspaceId }).sort({ createdAt: -1 }).lean();
+  const cacheKey = getWorkspaceProjectsCacheKey(workspaceId);
+  const cached = await getCachedJson<unknown[]>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const projects = await Project.find({ workspaceId })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  await setCachedJson(cacheKey, projects, env.CACHE_TTL_SECONDS);
+
+  return projects;
 };
 
 export const getProjectById = async (
@@ -54,6 +81,13 @@ export const getProjectById = async (
   validateObjectId(workspaceId, "workspaceId");
   validateObjectId(projectId, "projectId");
 
+  const cacheKey = getProjectCacheKey(workspaceId, projectId);
+  const cached = await getCachedJson<Record<string, unknown>>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
   const project = await Project.findOne({
     _id: projectId,
     workspaceId,
@@ -62,6 +96,8 @@ export const getProjectById = async (
   if (!project) {
     throw new AppError(404, "Project not found");
   }
+
+  await setCachedJson(cacheKey, project, env.CACHE_TTL_SECONDS);
 
   return project;
 };
@@ -96,6 +132,11 @@ export const updateProject = async ({
     throw new AppError(404, "Project not found");
   }
 
+  await deleteCacheKeys(
+    getWorkspaceProjectsCacheKey(workspaceId),
+    getProjectCacheKey(workspaceId, projectId),
+  );
+
   return project;
 };
 
@@ -125,4 +166,9 @@ export const deleteProject = async (
   }
 
   await deleteStoredFiles(attachmentPaths);
+
+  await deleteCacheKeys(
+    getWorkspaceProjectsCacheKey(workspaceId),
+    getProjectCacheKey(workspaceId, projectId),
+  );
 };

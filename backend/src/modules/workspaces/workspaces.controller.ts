@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import * as workspaceService from "./workspace.service.js";
 import { AppError } from "../../utils/app-error.js";
+import { recordAuditLog } from "../audit/audit.service.js";
 
 const getRequiredParam = (req: Request, paramName: string): string => {
   const value = req.params[paramName];
@@ -26,6 +27,19 @@ export const createWorkspace = async (
     const workspace = await workspaceService.createWorkspace({
       name: req.body.name,
       userId: req.user.userId,
+    });
+
+    if (!workspace) {
+      throw new AppError(500, "Workspace could not be created");
+    }
+
+    await recordAuditLog({
+      workspaceId: workspace._id.toString(),
+      actorId: req.user.userId,
+      action: "WORKSPACE_CREATED",
+      entityType: "WORKSPACE",
+      entityId: workspace._id.toString(),
+      metadata: { name: workspace.name },
     });
 
     res.status(201).json({
@@ -123,6 +137,18 @@ export const addWorkspaceMember = async (
       actingUser: req.workspaceMember.role,
     });
 
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.workspaceMember.userId,
+      action: "MEMBER_ADDED",
+      entityType: "MEMBER",
+      entityId: member._id.toString(),
+      metadata: {
+        targetUserId: member.userId.toString(),
+        role: member.role,
+      },
+    });
+
     res.status(201).json({
       success: true,
       data: member,
@@ -155,6 +181,18 @@ export const updateWorkspaceMemberRole = async (
       actingUser: req.workspaceMember.role,
     });
 
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.workspaceMember.userId,
+      action: "MEMBER_ROLE_UPDATED",
+      entityType: "MEMBER",
+      entityId: member._id.toString(),
+      metadata: {
+        targetUserId: member.userId.toString(),
+        role: member.role,
+      },
+    });
+
     res.status(200).json({
       success: true,
       data: member,
@@ -185,6 +223,14 @@ export const removeWorkspaceMember = async (
       memberId,
       req.workspaceMember.role,
     );
+
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.workspaceMember.userId,
+      action: "MEMBER_REMOVED",
+      entityType: "MEMBER",
+      entityId: memberId,
+    });
 
     res.status(204).send();
   } catch (error) {
