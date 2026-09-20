@@ -17,6 +17,18 @@ export const swaggerSpec = swaggerJsdoc({
       },
     ],
 
+    tags: [
+      { name: "Authentication" },
+      { name: "Workspaces" },
+      { name: "Workspace Members" },
+      { name: "Projects" },
+      { name: "Boards" },
+      { name: "Columns" },
+      { name: "Tasks" },
+      { name: "Comments" },
+      { name: "Attachments" },
+    ],
+
     components: {
       securitySchemes: {
         bearerAuth: {
