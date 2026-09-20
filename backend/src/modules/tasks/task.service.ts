@@ -5,6 +5,7 @@ import { Column } from "../columns/column.model.js";
 import { WorkspaceMember } from "../workspaces/workspace-member.model.js";
 import { AppError } from "../../utils/app-error.js";
 import type { TaskPriority } from "./task.model.js";
+import { Comment } from "../comments/comment.model.js";
 
 interface TaskContext {
   workspaceId: string;
@@ -232,6 +233,13 @@ export const deleteTask = async (
       if (!task) {
         throw new AppError(404, "Task not found");
       }
+
+      await Comment.deleteMany({
+        workspaceId: context.workspaceId,
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId,
+      }).session(session);
 
       await Task.deleteOne({
         _id: taskId,

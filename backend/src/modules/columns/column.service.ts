@@ -4,6 +4,7 @@ import { Board } from "../boards/board.model.js";
 import { Column } from "./column.model.js";
 import { AppError } from "../../utils/app-error.js";
 import { Task } from "../tasks/task.model.js";
+import { Comment } from "../comments/comment.model.js";
 
 interface ColumnContext {
   workspaceId: string;
@@ -142,6 +143,20 @@ export const deleteColumn = async (
       if (!column) {
         throw new AppError(404, "Column not found");
       }
+
+      await Comment.deleteMany({
+        workspaceId: context.workspaceId,
+        projectId: context.projectId,
+        boardId: context.boardId,
+        taskId: {
+          $in: await Task.find({
+            ...context,
+            columnId,
+          })
+            .session(session)
+            .distinct("_id"),
+        },
+      }).session(session);
 
       await Task.deleteMany({
         ...context,
