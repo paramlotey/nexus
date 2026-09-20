@@ -29,6 +29,7 @@ export const swaggerSpec = swaggerJsdoc({
       { name: "Attachments" },
       { name: "Audit Logs" },
       { name: "Search" },
+      { name: "Notifications" },
     ],
 
     components: {

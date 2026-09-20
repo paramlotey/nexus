@@ -16,6 +16,7 @@ import commentRoutes from "./modules/comments/comment.routes.js";
 import attachmentRoutes from "./modules/attachments/attachment.routes.js";
 import auditRoutes from "./modules/audit/audit.route.js";
 import searchRoutes from "./modules/search/search.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 const app = express();
 app.use(cors());
@@ -55,6 +56,10 @@ app.use(
 );
 app.use("/api/workspaces/:workspaceId/audit-logs", auditRoutes);
 app.use("/api/workspaces/:workspaceId/search", searchRoutes);
+app.use(
+  "/api/workspaces/:workspaceId/notifications",
+  notificationRoutes,
+);
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
