@@ -147,6 +147,7 @@ export const swaggerSpec = swaggerJsdoc({
             },
           },
         },
+        
         CreateBoardRequest: {
           type: "object",
           required: ["name"],
@@ -218,6 +219,85 @@ export const swaggerSpec = swaggerJsdoc({
                 type: "string",
               },
               example: ["columnId3", "columnId1", "columnId2"],
+            },
+          },
+        },
+
+        CreateTaskRequest: {
+          type: "object",
+          required: ["columnId", "title"],
+          properties: {
+            columnId: {
+              type: "string",
+            },
+            title: {
+              type: "string",
+              maxLength: 200,
+              example: "Implement login page",
+            },
+            description: {
+              type: "string",
+              maxLength: 5000,
+            },
+            priority: {
+              type: "string",
+              enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
+              default: "MEDIUM",
+            },
+            assigneeIds: {
+              type: "array",
+              uniqueItems: true,
+              items: {
+                type: "string",
+              },
+            },
+            dueDate: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+
+        UpdateTaskRequest: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              maxLength: 200,
+            },
+            description: {
+              type: "string",
+              maxLength: 5000,
+            },
+            priority: {
+              type: "string",
+              enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
+            },
+            assigneeIds: {
+              type: "array",
+              uniqueItems: true,
+              items: {
+                type: "string",
+              },
+            },
+            dueDate: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+          },
+        },
+
+        MoveTaskRequest: {
+          type: "object",
+          required: ["targetColumnId", "position"],
+          properties: {
+            targetColumnId: {
+              type: "string",
+            },
+            position: {
+              type: "integer",
+              minimum: 0,
             },
           },
         },

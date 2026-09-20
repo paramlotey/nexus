@@ -11,6 +11,7 @@ import workspaceRoutes from "./modules/workspaces/workspaces.routes.js";
 import projectRoutes from "./modules/projects/project.routes.js";
 import boardRoutes from "./modules/boards/board.routes.js";
 import columnRoutes from "./modules/columns/column.routes.js";
+import taskRoutes from "./modules/tasks/task.routes.js";
 
 const app = express();
 app.use(cors());
@@ -35,6 +36,10 @@ app.use("/api/workspaces/:workspaceId/projects/:projectId/boards", boardRoutes);
 app.use(
   "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns",
   columnRoutes,
+);
+app.use(
+  "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/tasks",
+  taskRoutes,
 );
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { Board } from "../boards/board.model.js";
 import { Column } from "./column.model.js";
 import { AppError } from "../../utils/app-error.js";
+import { Task } from "../tasks/task.model.js";
 
 interface ColumnContext {
   workspaceId: string;
@@ -129,26 +130,42 @@ export const deleteColumn = async (
 
   await ensureBoardExists(context);
 
-  const column = await Column.findOneAndDelete({
-    _id: columnId,
-    ...context,
-  });
+  const session = await mongoose.startSession();
 
-  if (!column) {
-    throw new AppError(404, "Column not found");
+  try {
+    await session.withTransaction(async () => {
+      const column = await Column.findOne({
+        _id: columnId,
+        ...context,
+      }).session(session);
+
+      if (!column) {
+        throw new AppError(404, "Column not found");
+      }
+
+      await Task.deleteMany({
+        ...context,
+        columnId,
+      }).session(session);
+
+      await Column.deleteOne({
+        _id: columnId,
+        ...context,
+      }).session(session);
+
+      await Column.updateMany(
+        {
+          ...context,
+          position: { $gt: column.position },
+        },
+        {
+          $inc: { position: -1 },
+        },
+      ).session(session);
+    });
+  } finally {
+    await session.endSession();
   }
-
-  await Column.updateMany(
-    {
-      ...context,
-      position: { $gt: column.position },
-    },
-    {
-      $inc: {
-        position: -1,
-      },
-    },
-  );
 };
 
 export const reorderColumns = async (

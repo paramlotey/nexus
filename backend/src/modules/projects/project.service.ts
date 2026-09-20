@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 
 import { Project } from "./project.model.js";
 import { AppError } from "../../utils/app-error.js";
+import { Board } from "../boards/board.model.js";
+import { Column } from "../columns/column.model.js";
+import { Task } from "../tasks/task.model.js";
 
 interface CreateProjectInput {
   workspaceId: string;
@@ -104,12 +107,40 @@ export const deleteProject = async (
   validateObjectId(workspaceId, "workspaceId");
   validateObjectId(projectId, "projectId");
 
-  const project = await Project.findOneAndDelete({
-    _id: projectId,
-    workspaceId,
-  });
+  const session = await mongoose.startSession();
 
-  if (!project) {
-    throw new AppError(404, "Project not found");
+  try {
+    await session.withTransaction(async () => {
+      const project = await Project.findOne({
+        _id: projectId,
+        workspaceId,
+      }).session(session);
+
+      if (!project) {
+        throw new AppError(404, "Project not found");
+      }
+
+      await Task.deleteMany({
+        workspaceId,
+        projectId,
+      }).session(session);
+
+      await Column.deleteMany({
+        workspaceId,
+        projectId,
+      }).session(session);
+
+      await Board.deleteMany({
+        workspaceId,
+        projectId,
+      }).session(session);
+
+      await Project.deleteOne({
+        _id: projectId,
+        workspaceId,
+      }).session(session);
+    });
+  } finally {
+    await session.endSession();
   }
 };

@@ -4,6 +4,7 @@ import { Board } from "./board.model.js";
 import { Project } from "../projects/project.model.js";
 import { AppError } from "../../utils/app-error.js";
 import { Column } from "../columns/column.model.js";
+import { Task } from "../tasks/task.model.js";
 
 interface CreateBoardInput {
   workspaceId: string;
@@ -158,6 +159,12 @@ export const deleteBoard = async (
       if (!board) {
         throw new AppError(404, "Board not found");
       }
+
+      await Task.deleteMany({
+        workspaceId,
+        projectId,
+        boardId,
+      }).session(session);
 
       await Column.deleteMany({
         workspaceId,
