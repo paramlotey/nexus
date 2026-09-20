@@ -9,6 +9,7 @@ import { swaggerSpec } from "./config/swagger.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import workspaceRoutes from "./modules/workspaces/workspaces.routes.js";
 import projectRoutes from "./modules/projects/project.routes.js";
+import boardRoutes from "./modules/boards/board.routes.js";
 
 const app = express();
 app.use(cors());
@@ -29,6 +30,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/workspaces/:workspaceId", projectRoutes);
+app.use("/api/workspaces/:workspaceId/projects/:projectId/boards", boardRoutes);
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
