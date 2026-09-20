@@ -5,6 +5,9 @@ import { Column } from "../columns/column.model.js";
 import { WorkspaceMember } from "../workspaces/workspace-member.model.js";
 import { AppError } from "../../utils/app-error.js";
 import type { TaskPriority } from "./task.model.js";
+import { Comment } from "../comments/comment.model.js";
+import { deleteTaskTree } from "../../services/resource-cleanup.service.js";
+import { deleteStoredFiles } from "../attachments/attachment.storage.js";
 
 interface TaskContext {
   workspaceId: string;
@@ -222,40 +225,24 @@ export const deleteTask = async (
 
   const session = await mongoose.startSession();
 
+  let attachmentPaths: string[] = [];
+
   try {
     await session.withTransaction(async () => {
-      const task = await Task.findOne({
-        _id: taskId,
-        ...context,
-      }).session(session);
-
-      if (!task) {
-        throw new AppError(404, "Task not found");
-      }
-
-      await Task.deleteOne({
-        _id: taskId,
-        ...context,
-      }).session(session);
-
-      await Task.updateMany(
+      attachmentPaths = await deleteTaskTree(
         {
           ...context,
-          columnId: task.columnId,
-          position: {
-            $gt: task.position,
-          },
+          taskId,
         },
-        {
-          $inc: {
-            position: -1,
-          },
-        },
-      ).session(session);
+
+        session,
+      );
     });
   } finally {
     await session.endSession();
   }
+
+  await deleteStoredFiles(attachmentPaths);
 };
 
 export const moveTask = async (

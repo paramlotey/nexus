@@ -17,6 +17,10 @@ build/
 # Test coverage
 coverage/
 
+# Runtime uploads and generated development fixtures
+uploads/
+seed-output.json
+
 # OS files
 .DS_Store
 Thumbs.db

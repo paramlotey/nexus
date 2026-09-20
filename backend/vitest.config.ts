@@ -19,7 +19,7 @@ export default defineConfig({
 
       include: ["src/**/*.ts"],
 
-      exclude: ["src/server.ts", "src/types/**"],
+      exclude: ["src/server.ts", "src/types/**", "src/scripts/**"],
 
       thresholds: {
         lines: 60,

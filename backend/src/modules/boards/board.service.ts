@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import { Board } from "./board.model.js";
 import { Project } from "../projects/project.model.js";
 import { AppError } from "../../utils/app-error.js";
-import { Column } from "../columns/column.model.js";
-import { Task } from "../tasks/task.model.js";
+import { deleteBoardTree } from "../../services/resource-cleanup.service.js";
+import { deleteStoredFiles } from "../attachments/attachment.storage.js";
 
 interface CreateBoardInput {
   workspaceId: string;
@@ -148,37 +148,22 @@ export const deleteBoard = async (
 
   const session = await mongoose.startSession();
 
+  let attachmentPaths: string[] = [];
+
   try {
     await session.withTransaction(async () => {
-      const board = await Board.findOne({
-        _id: boardId,
-        workspaceId,
-        projectId,
-      }).session(session);
-
-      if (!board) {
-        throw new AppError(404, "Board not found");
-      }
-
-      await Task.deleteMany({
-        workspaceId,
-        projectId,
-        boardId,
-      }).session(session);
-
-      await Column.deleteMany({
-        workspaceId,
-        projectId,
-        boardId,
-      }).session(session);
-
-      await Board.deleteOne({
-        _id: boardId,
-        workspaceId,
-        projectId,
-      }).session(session);
+      attachmentPaths = await deleteBoardTree(
+        {
+          workspaceId,
+          projectId,
+          boardId,
+        },
+        session,
+      );
     });
   } finally {
     await session.endSession();
   }
+
+  await deleteStoredFiles(attachmentPaths);
 };

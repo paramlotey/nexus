@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 import { Board } from "../boards/board.model.js";
 import { Column } from "./column.model.js";
 import { AppError } from "../../utils/app-error.js";
-import { Task } from "../tasks/task.model.js";
+import { deleteColumnTree } from "../../services/resource-cleanup.service.js";
+import { deleteStoredFiles } from "../attachments/attachment.storage.js";
 
 interface ColumnContext {
   workspaceId: string;
@@ -132,40 +133,23 @@ export const deleteColumn = async (
 
   const session = await mongoose.startSession();
 
+  let attachmentPaths: string[] = [];
+
   try {
     await session.withTransaction(async () => {
-      const column = await Column.findOne({
-        _id: columnId,
-        ...context,
-      }).session(session);
-
-      if (!column) {
-        throw new AppError(404, "Column not found");
-      }
-
-      await Task.deleteMany({
-        ...context,
-        columnId,
-      }).session(session);
-
-      await Column.deleteOne({
-        _id: columnId,
-        ...context,
-      }).session(session);
-
-      await Column.updateMany(
+      attachmentPaths = await deleteColumnTree(
         {
           ...context,
-          position: { $gt: column.position },
+          columnId,
         },
-        {
-          $inc: { position: -1 },
-        },
-      ).session(session);
+        session,
+      );
     });
   } finally {
     await session.endSession();
   }
+
+  await deleteStoredFiles(attachmentPaths);
 };
 
 export const reorderColumns = async (
