@@ -123,6 +123,21 @@ const createComment = async (
   return response.body.data;
 };
 
+const createDocument = async (
+  workspaceId: string,
+  token: string,
+  title: string,
+  content: string,
+) => {
+  const response = await request(app)
+    .post(`/api/workspaces/${workspaceId}/documents`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({ title, content });
+
+  expect(response.status).toBe(201);
+  return response.body.data;
+};
+
 const setupSearchData = async () => {
   const owner = await registerUser("Search Owner", "owner@test.com");
   const workspace = await createWorkspace(
@@ -166,11 +181,18 @@ const setupSearchData = async () => {
     "Authentication testing is complete",
   );
 
+  await createDocument(
+    workspace._id,
+    owner.accessToken,
+    "Authentication runbook",
+    "Operational authentication guidance",
+  );
+
   return { owner, workspace };
 };
 
 describe("Workspace Search API", () => {
-  it("searches across projects, boards, tasks and comments", async () => {
+  it("searches across projects, boards, tasks, comments and documents", async () => {
     const { owner, workspace } = await setupSearchData();
 
     const response = await request(app)
@@ -182,6 +204,7 @@ describe("Workspace Search API", () => {
     expect(response.body.data.results.boards.length).toBeGreaterThan(0);
     expect(response.body.data.results.tasks.length).toBeGreaterThan(0);
     expect(response.body.data.results.comments.length).toBeGreaterThan(0);
+    expect(response.body.data.results.documents.length).toBeGreaterThan(0);
   });
 
   it("supports searching a single resource type", async () => {
@@ -198,6 +221,25 @@ describe("Workspace Search API", () => {
     expect(response.body.data.results.projects).toEqual([]);
     expect(response.body.data.results.boards).toEqual([]);
     expect(response.body.data.results.comments).toEqual([]);
+    expect(response.body.data.results.documents).toEqual([]);
+  });
+
+  it("supports document-only search", async () => {
+    const { owner, workspace } = await setupSearchData();
+
+    const response = await request(app)
+      .get(
+        `/api/workspaces/${workspace._id}/search?q=runbook&type=DOCUMENT`,
+      )
+      .set("Authorization", `Bearer ${owner.accessToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.results.documents).toHaveLength(1);
+    expect(response.body.data.results.documents[0].title).toBe(
+      "Authentication runbook",
+    );
+    expect(response.body.data.results.projects).toEqual([]);
+    expect(response.body.data.results.tasks).toEqual([]);
   });
 
   it("allows VIEWER to search readable workspace resources", async () => {

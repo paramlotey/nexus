@@ -11,6 +11,7 @@ import { Column } from "../src/modules/columns/column.model.js";
 import { Comment } from "../src/modules/comments/comment.model.js";
 import { Project } from "../src/modules/projects/project.model.js";
 import { Task } from "../src/modules/tasks/task.model.js";
+import { WorkspaceDocument } from "../src/modules/documents/document.model.js";
 
 const PASSWORD = "Password@123";
 
@@ -98,6 +99,16 @@ const createFixture = async () => {
 
   expect(attachmentResponse.status).toBe(201);
 
+  const documentResponse = await request(app)
+    .post(`/api/workspaces/${workspace._id}/documents`)
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: "Cleanup Document",
+      projectId: project._id,
+    });
+
+  expect(documentResponse.status).toBe(201);
+
   return {
     accessToken,
     workspace,
@@ -160,6 +171,9 @@ describe("Resource cleanup cascade", () => {
         expect(await Project.countDocuments({ _id: project._id })).toBe(0);
         expect(await Board.countDocuments({ projectId: project._id })).toBe(0);
         expect(await Column.countDocuments({ projectId: project._id })).toBe(0);
+        expect(
+          await WorkspaceDocument.countDocuments({ projectId: project._id }),
+        ).toBe(0);
       }
     },
   );

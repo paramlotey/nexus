@@ -6,6 +6,7 @@ import { Column } from "../modules/columns/column.model.js";
 import { Task } from "../modules/tasks/task.model.js";
 import { Comment } from "../modules/comments/comment.model.js";
 import { Attachment } from "../modules/attachments/attachment.model.js";
+import { WorkspaceDocument } from "../modules/documents/document.model.js";
 
 import { AppError } from "../utils/app-error.js";
 
@@ -289,6 +290,8 @@ export const deleteProjectTree = async (
   await Column.deleteMany(childFilter).session(session);
 
   await Board.deleteMany(childFilter).session(session);
+
+  await WorkspaceDocument.deleteMany(childFilter).session(session);
 
   await Project.deleteOne({
     _id: context.projectId,

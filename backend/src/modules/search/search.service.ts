@@ -4,6 +4,7 @@ import { Project } from "../projects/project.model.js";
 import { Board } from "../boards/board.model.js";
 import { Task } from "../tasks/task.model.js";
 import { Comment } from "../comments/comment.model.js";
+import { WorkspaceDocument } from "../documents/document.model.js";
 import type { SearchEntityType } from "./search.validation.js";
 import { AppError } from "../../utils/app-error.js";
 
@@ -150,6 +151,37 @@ const searchComments = async (
   ]);
 };
 
+const searchDocuments = async (
+  workspaceId: mongoose.Types.ObjectId,
+  query: string,
+  limit: number,
+) => {
+  return WorkspaceDocument.aggregate([
+    {
+      $match: {
+        workspaceId,
+        $text: { $search: query },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        workspaceId: 1,
+        projectId: 1,
+        title: 1,
+        content: 1,
+        createdBy: 1,
+        updatedBy: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        score: { $meta: "textScore" },
+      },
+    },
+    { $sort: { score: -1 } },
+    { $limit: limit },
+  ]);
+};
+
 export const searchWorkspace = async ({
   workspaceId,
   query,
@@ -163,11 +195,12 @@ export const searchWorkspace = async ({
     Board.init(),
     Task.init(),
     Comment.init(),
+    WorkspaceDocument.init(),
   ]);
 
   const workspaceObjectId = new mongoose.Types.ObjectId(workspaceId);
 
-  const [projects, boards, tasks, comments] = await Promise.all([
+  const [projects, boards, tasks, comments, documents] = await Promise.all([
     shouldSearch(type, "PROJECT")
       ? searchProjects(workspaceObjectId, query, limit)
       : Promise.resolve([]),
@@ -180,6 +213,9 @@ export const searchWorkspace = async ({
     shouldSearch(type, "COMMENT")
       ? searchComments(workspaceObjectId, query, limit)
       : Promise.resolve([]),
+    shouldSearch(type, "DOCUMENT")
+      ? searchDocuments(workspaceObjectId, query, limit)
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -189,12 +225,14 @@ export const searchWorkspace = async ({
       boards,
       tasks,
       comments,
+      documents,
     },
     counts: {
       projects: projects.length,
       boards: boards.length,
       tasks: tasks.length,
       comments: comments.length,
+      documents: documents.length,
     },
   };
 };

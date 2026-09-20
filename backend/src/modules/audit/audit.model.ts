@@ -30,6 +30,10 @@ export const AUDIT_ACTIONS = [
 
   "ATTACHMENT_UPLOADED",
   "ATTACHMENT_DELETED",
+
+  "DOCUMENT_CREATED",
+  "DOCUMENT_UPDATED",
+  "DOCUMENT_DELETED",
 ] as const;
 
 export const AUDIT_ENTITY_TYPES = [
@@ -41,6 +45,7 @@ export const AUDIT_ENTITY_TYPES = [
   "TASK",
   "COMMENT",
   "ATTACHMENT",
+  "DOCUMENT",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

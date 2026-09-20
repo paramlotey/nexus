@@ -17,7 +17,7 @@ const router = Router({
  *     tags:
  *       - Search
  *     summary: Search workspace resources
- *     description: Searches Projects, Boards, Tasks and Comments inside the current workspace using MongoDB text search. Results are grouped by resource type.
+ *     description: Searches Projects, Boards, Tasks, Comments and Documents inside the current workspace using MongoDB text search. Results are grouped by resource type.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -46,6 +46,7 @@ const router = Router({
  *             - BOARD
  *             - TASK
  *             - COMMENT
+ *             - DOCUMENT
  *       - in: query
  *         name: limit
  *         required: false
@@ -91,6 +92,10 @@ const router = Router({
  *                           type: array
  *                           items:
  *                             type: object
+ *                         documents:
+ *                           type: array
+ *                           items:
+ *                             type: object
  *                     counts:
  *                       type: object
  *                       properties:
@@ -101,6 +106,8 @@ const router = Router({
  *                         tasks:
  *                           type: integer
  *                         comments:
+ *                           type: integer
+ *                         documents:
  *                           type: integer
  *       400:
  *         description: Invalid workspace ID or search parameters
