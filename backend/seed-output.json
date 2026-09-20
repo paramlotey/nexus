@@ -1,0 +1,31 @@
+{
+  "password": "Password@123",
+  "workspaceId": "6aaf9595019920cf2ca8689c",
+  "projectId": "6aaf9595019920cf2ca868a1",
+  "users": {
+    "owner": {
+      "userId": "6aaf9595019920cf2ca86898",
+      "email": "owner@test.com",
+      "role": "OWNER",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWFmOTU5NTAxOTkyMGNmMmNhODY4OTgiLCJpYXQiOjE3ODk4OTE5ODksImV4cCI6MTc4OTk3ODM4OX0.Z26ZpxjxTDuN3MIfQ-_3Z3I3JVy5__zZwvR5GwqbO5c"
+    },
+    "admin": {
+      "userId": "6aaf9595019920cf2ca86899",
+      "email": "admin@test.com",
+      "role": "ADMIN",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWFmOTU5NTAxOTkyMGNmMmNhODY4OTkiLCJpYXQiOjE3ODk4OTE5ODksImV4cCI6MTc4OTk3ODM4OX0.ZiGOFP9P1vXF4DegV7Vnug7VXwz03qICKr2xT3o9Bbk"
+    },
+    "member": {
+      "userId": "6aaf9595019920cf2ca8689a",
+      "email": "member@test.com",
+      "role": "MEMBER",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWFmOTU5NTAxOTkyMGNmMmNhODY4OWEiLCJpYXQiOjE3ODk4OTE5ODksImV4cCI6MTc4OTk3ODM4OX0.0eHRTImo3ZoaaMXgPM1dyfkRl-1-SOTn4pjxiW7UxwM"
+    },
+    "viewer": {
+      "userId": "6aaf9595019920cf2ca8689b",
+      "email": "viewer@test.com",
+      "role": "VIEWER",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWFmOTU5NTAxOTkyMGNmMmNhODY4OWIiLCJpYXQiOjE3ODk4OTE5ODksImV4cCI6MTc4OTk3ODM4OX0.QJ-dLCPSnL9OSU2LYVFw_XIqFT6UtwBv7S9PjFZi3B4"
+    }
+  }
+}
